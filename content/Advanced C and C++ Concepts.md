@@ -1,7 +1,5 @@
 
-# Advanced C/C++ Concepts  
-
-This section delves into more advanced topics in C/C++, including pointers, memory management, and object-oriented programming.  Link to node1: [[node1]]
+This section delves into more advanced topics in C/C++, including pointers, memory management, and object-oriented programming.  Link to node1: [[Introduction to C and C++]]
 
 ## Pointers in C/C++  
 
@@ -23,3 +21,7 @@ int main() {
 
     return 0;  
 }  
+```
+
+
+Bye :)

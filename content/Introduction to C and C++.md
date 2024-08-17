@@ -1,4 +1,3 @@
-# Introduction to C/C++  
 
 Welcome to the introduction section of our C/C++ tutorial. In this section, we will cover the basics of these powerful programming languages.  
 
