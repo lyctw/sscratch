@@ -1,5 +1,13 @@
+---
+title: Advanced C/C++ Concepts
+tags:
+- C/C++
+- Embedded
+date: 2023-10-19
+---
 
-This section delves into more advanced topics in C/C++, including pointers, memory management, and object-oriented programming.  Link to node1: [[0x1 - Introduction to C and C++]]
+
+This section delves into more advanced topics in C/C++, including pointers, memory management, and object-oriented programming.  Link to node1: [[01 - Introduction to C and C++]]
 
 ## Pointers in C/C++  
 

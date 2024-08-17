@@ -1,3 +1,10 @@
+---
+title: Introduction to C/C++
+tags:
+  - C/C++
+  - Embedded
+date: 2023-10-11
+---
 
 Welcome to the introduction section of our C/C++ tutorial. In this section, we will cover the basics of these powerful programming languages.  
 
