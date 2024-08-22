@@ -1,5 +1,5 @@
 ---
-title: RISC-V 性能監控單元與 Sscofpmf 擴展
+title: RISC-V 效能監控單元與 Sscofpmf 擴展
 tags:
   - RISC-V
   - perf-tool
