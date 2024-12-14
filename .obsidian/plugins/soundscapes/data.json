@@ -1,0 +1,12 @@
+{
+  "soundscape": "lofi",
+  "volume": 100,
+  "autoplay": false,
+  "scrollSongTitle": true,
+  "customSoundscapes": [],
+  "myMusicIndex": [],
+  "myMusicFolderPath": "",
+  "reindexFrequency": "5",
+  "myMusicShuffle": false,
+  "currentTrackIndex": 0
+}

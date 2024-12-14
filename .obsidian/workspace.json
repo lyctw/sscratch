@@ -1,0 +1,232 @@
+{
+  "main": {
+    "id": "2246825457093f28",
+    "type": "split",
+    "children": [
+      {
+        "id": "24a0b828d024404d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d9f647d0ff2b08a0",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "content/Books/🌱 Takeaways of Building a Second Brain.md",
+                "mode": "source",
+                "source": true
+              },
+              "icon": "lucide-file",
+              "title": "🌱 Takeaways of Building a Second Brain"
+            }
+          },
+          {
+            "id": "4d85e8110243c163",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "README.md",
+                "mode": "preview",
+                "source": true
+              },
+              "icon": "lucide-file",
+              "title": "README"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f84048e91f81b274",
+    "type": "split",
+    "children": [
+      {
+        "id": "73c9ee16eaa201dd",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "271f5cfb766d9869",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "7bf33357135dd263",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "4690ec6edef5a362",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "815f5791025e8555",
+    "type": "split",
+    "children": [
+      {
+        "id": "6f80861de0a48284",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "839d7ba41bc10489",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "README.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for README"
+            }
+          },
+          {
+            "id": "10e21e94294285d4",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "README.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from README"
+            }
+          },
+          {
+            "id": "ee2964f64f32403e",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "44ebf02d6e8cc3db",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "README.md"
+              },
+              "icon": "lucide-list",
+              "title": "Outline of README"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "soundscapes:Soundscapes: My Music": false
+    }
+  },
+  "active": "4d85e8110243c163",
+  "lastOpenFiles": [
+    "CODE_OF_CONDUCT.md",
+    "content/index.md",
+    "content/C and C++/02 - Advanced C and C++ Concepts.md",
+    "content/C and C++/01 - Introduction to C and C++.md",
+    "content/C and C++",
+    "public/404.html",
+    "public/assets/pmu/scountovf.png",
+    "public/assets/pmu/sbi_pmu_interface.png",
+    "public/assets/pmu/riscv,event-to-mhpmevent.png",
+    "public/assets/pmu/riscv,event-to-mhpmcounters.png",
+    "public/assets/pmu/hpm_counter_used.png",
+    "public/assets/pmu/pmu_active_events_invalid.png",
+    "public/assets/pmu/pmu_active_events.png",
+    "public/assets/pmu",
+    "public/assets",
+    "public/RISC-V-Atomic.md.draft",
+    "public/static/og-image.png",
+    "public/static/contentIndex.json",
+    "public/static/icon.png",
+    "public/static",
+    "public/index.xml",
+    "public/sitemap.xml",
+    "public/tags/perf-tool.html",
+    "content/Books/🌱 Takeaways of Building a Second Brain.md",
+    "content/test slides.md",
+    "content/test node.md",
+    "content/my canvas.canvas",
+    "public/my-canvas.canvas",
+    "node_modules/wrap-ansi-cjs/node_modules/string-width/readme.md",
+    "node_modules/tsx/node_modules/@esbuild/linux-x64/README.md",
+    "node_modules/fetch-ponyfill/node_modules/node-fetch/README.md",
+    "node_modules/fetch-ponyfill/node_modules/node-fetch/LICENSE.md",
+    "node_modules/gray-matter/node_modules/js-yaml/README.md",
+    "node_modules/gray-matter/node_modules/js-yaml/CHANGELOG.md",
+    "node_modules/cliui/node_modules/wrap-ansi/readme.md",
+    "node_modules/fetch-ponyfill/node_modules/webidl-conversions/LICENSE.md",
+    "node_modules/fetch-ponyfill/node_modules/webidl-conversions/README.md",
+    "node_modules/gray-matter/node_modules/argparse/README.md",
+    "node_modules/hast-util-from-html/node_modules/vfile-message/readme.md",
+    "node_modules/fetch-ponyfill/node_modules/whatwg-url/README.md",
+    "node_modules/gray-matter/node_modules/argparse/CHANGELOG.md",
+    "node_modules/hast-util-from-html/node_modules/@types/unist/README.md",
+    "node_modules/hast-util-from-html/node_modules/unist-util-stringify-position/readme.md",
+    "node_modules/hast-util-from-parse5/node_modules/@types/unist/README.md",
+    "node_modules/hast-util-raw/node_modules/@types/unist/README.md",
+    "node_modules/hast-util-to-html/node_modules/@types/unist/README.md",
+    "node_modules/@types/d3-scale-chromatic/README.md",
+    "node_modules/cli-spinner/img/spinner.gif"
+  ]
+}
