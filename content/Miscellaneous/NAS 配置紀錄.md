@@ -21,9 +21,31 @@ date: 2023-12-22
 
 使用過程中，散熱是需要注意的問題， 可能影響硬碟壽命。雖然待機時 CPU 的使用率保持在 10% 以下，但偶爾散熱片會達到 48.1°C，M.2 SSD 平時保持室溫，工作時溫度會升至 38°C。因此主動冷卻可能是必要的，但機殼只可以在 CPU 散熱片加的風扇，但是插上了卻不會轉動:
 ![[../assets/cm3588_nas/Pasted image 20241222195135.png]]
-還特地跑附近電料行請他們幫忙測試，目前懷疑是 PWM 控制少了，看這個 [kernel patch](https://lore.kernel.org/linux-arm-kernel/20240616215354.40999-2-seb-dev@mail.de/T/) 應該有對應的驅動要打開？ ... 先留個坑，好險 FriendlyElec 的軟體支援做得相當不錯，要自己編譯 kernel 有提供 v6.1 的[原始碼及指令](https://wiki.friendlyelec.com/wiki/index.php/CM3588#Build_the_code_using_scripts)。
+還特地跑附近電料行請他們幫忙測試，~~目前懷疑是 PWM 控制少了，看這個 [kernel patch](https://lore.kernel.org/linux-arm-kernel/20240616215354.40999-2-seb-dev@mail.de/T/) 應該有對應的驅動要打開？... 先留個坑，好險 FriendlyElec 的軟體支援做得相當不錯，要自己編譯 kernel 有提供 v6.1 的[原始碼及指令](https://wiki.friendlyelec.com/wiki/index.php/CM3588#Build_the_code_using_scripts)。~~
 
-[^f2]: 
+後來在 dts 中搜尋 "fan" 找到一些資訊：
+
+```shell
+dtc -I fs /proc/device-tree -O dts -o cm3588.dts
+```
+
+```
+pwm-fan {  
+  rockchip,hold-time-ms = <0x7d0>;  
+  cooling-levels = <0x00 0x23 0x40 0x64 0x96 0xff>;  
+  rockchip,temp-trips = <0xc350 0x01 0xd6d8 0x02 0xea60 0x03 0xfde8 0x04 0x11170 0x05>;  
+  compatible = "pwm-fan";  
+  status = "okay";  
+  phandle = <0x49c>;  
+  pwms = <0x1cc 0x00 0xc350 0x00>;  
+  #cooling-cells = <0x02>;  
+  fan-supply = <0x72>;  
+};
+```
+
+其中 `rockchip,temp-trips` 代表攝氏 50 到 70 度對應的 PWM 冷卻狀態[^pwm-fan-dt], 所以 CPU 溫度不夠高是不會運轉的, 可能可以重編 DTS，比如說 35 度就開始旋轉，之後有空再玩吧， 板子上有 debug UART 應該是可以進到 U-Boot 的。
+
+[^pwm-fan-dt]: Rockchip 的下游 kernel 中的 [device-tree binding](https://github.com/friendlyarm/kernel-rockchip/blob/6bd846aff11336b7250bb638eb4097207543fc88/Documentation/devicetree/bindings/hwmon/pwm-fan.txt#L21C1-L25C69)
 
 ## 成本與效益的權衡
 
