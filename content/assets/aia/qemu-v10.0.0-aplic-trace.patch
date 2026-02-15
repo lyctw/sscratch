@@ -1,0 +1,290 @@
+From b704992919df1cd3b6dbdbe203cbf686abafe23a Mon Sep 17 00:00:00 2001
+From: Yu-Chien Lin <mail@yclin.org>
+Date: Sat, 14 Feb 2026 20:03:21 -0800
+Subject: [PATCH] support APLIC access trace
+
+---
+ hw/intc/riscv_aplic.c | 175 ++++++++++++++++++++++++++++++++++++------
+ hw/intc/trace-events  |   4 +
+ 2 files changed, 155 insertions(+), 24 deletions(-)
+
+diff --git a/hw/intc/riscv_aplic.c b/hw/intc/riscv_aplic.c
+index a1d9fa5085..be28ab9517 100644
+--- a/hw/intc/riscv_aplic.c
++++ b/hw/intc/riscv_aplic.c
+@@ -35,6 +35,7 @@
+ #include "system/tcg.h"
+ #include "kvm/kvm_riscv.h"
+ #include "migration/vmstate.h"
++#include "trace.h"
+ 
+ #define APLIC_MAX_IDC                  (1UL << 14)
+ #define APLIC_MAX_SOURCE               1024
+@@ -626,9 +627,107 @@ static void riscv_aplic_request(void *opaque, int irq, int level)
+     }
+ }
+ 
++static void riscv_aplic_get_cpu_info(uint64_t *hartid, uint64_t *pc)
++{
++    if (current_cpu) {
++        CPURISCVState *env = cpu_env(current_cpu);
++        *hartid = env->mhartid;
++        *pc = env->pc;
++    } else {
++        *hartid = 0;
++        *pc = 0;
++    }
++}
++
++static const char *riscv_aplic_regname(RISCVAPLICState *aplic, hwaddr addr,
++                                       char *buf, size_t buflen)
++{
++    uint32_t irq, word, idc;
++
++    if (addr == APLIC_DOMAINCFG) {
++        return "DOMAINCFG";
++    } else if ((APLIC_SOURCECFG_BASE <= addr) &&
++               (addr < (APLIC_SOURCECFG_BASE + (aplic->num_irqs - 1) * 4))) {
++        irq = ((addr - APLIC_SOURCECFG_BASE) >> 2) + 1;
++        snprintf(buf, buflen, "SOURCECFG[%u]", irq);
++        return buf;
++    } else if (addr == APLIC_MMSICFGADDR) {
++        return "MMSICFGADDR";
++    } else if (addr == APLIC_MMSICFGADDRH) {
++        return "MMSICFGADDRH";
++    } else if (addr == APLIC_SMSICFGADDR) {
++        return "SMSICFGADDR";
++    } else if (addr == APLIC_SMSICFGADDRH) {
++        return "SMSICFGADDRH";
++    } else if ((APLIC_SETIP_BASE <= addr) &&
++               (addr < (APLIC_SETIP_BASE + aplic->bitfield_words * 4))) {
++        word = (addr - APLIC_SETIP_BASE) >> 2;
++        snprintf(buf, buflen, "SETIP[%u]", word);
++        return buf;
++    } else if (addr == APLIC_SETIPNUM) {
++        return "SETIPNUM";
++    } else if ((APLIC_CLRIP_BASE <= addr) &&
++               (addr < (APLIC_CLRIP_BASE + aplic->bitfield_words * 4))) {
++        word = (addr - APLIC_CLRIP_BASE) >> 2;
++        snprintf(buf, buflen, "CLRIP[%u]", word);
++        return buf;
++    } else if (addr == APLIC_CLRIPNUM) {
++        return "CLRIPNUM";
++    } else if ((APLIC_SETIE_BASE <= addr) &&
++               (addr < (APLIC_SETIE_BASE + aplic->bitfield_words * 4))) {
++        word = (addr - APLIC_SETIE_BASE) >> 2;
++        snprintf(buf, buflen, "SETIE[%u]", word);
++        return buf;
++    } else if (addr == APLIC_SETIENUM) {
++        return "SETIENUM";
++    } else if ((APLIC_CLRIE_BASE <= addr) &&
++               (addr < (APLIC_CLRIE_BASE + aplic->bitfield_words * 4))) {
++        word = (addr - APLIC_CLRIE_BASE) >> 2;
++        snprintf(buf, buflen, "CLRIE[%u]", word);
++        return buf;
++    } else if (addr == APLIC_CLRIENUM) {
++        return "CLRIENUM";
++    } else if (addr == APLIC_SETIPNUM_LE) {
++        return "SETIPNUM_LE";
++    } else if (addr == APLIC_SETIPNUM_BE) {
++        return "SETIPNUM_BE";
++    } else if (addr == APLIC_GENMSI) {
++        return "GENMSI";
++    } else if ((APLIC_TARGET_BASE <= addr) &&
++               (addr < (APLIC_TARGET_BASE + (aplic->num_irqs - 1) * 4))) {
++        irq = ((addr - APLIC_TARGET_BASE) >> 2) + 1;
++        snprintf(buf, buflen, "TARGET[%u]", irq);
++        return buf;
++    } else if ((APLIC_IDC_BASE <= addr) &&
++               (addr < (APLIC_IDC_BASE + aplic->num_harts * APLIC_IDC_SIZE))) {
++        idc = (addr - APLIC_IDC_BASE) / APLIC_IDC_SIZE;
++        switch (addr - (APLIC_IDC_BASE + idc * APLIC_IDC_SIZE)) {
++        case APLIC_IDC_IDELIVERY:
++            snprintf(buf, buflen, "IDC[%u].IDELIVERY", idc);
++            return buf;
++        case APLIC_IDC_IFORCE:
++            snprintf(buf, buflen, "IDC[%u].IFORCE", idc);
++            return buf;
++        case APLIC_IDC_ITHRESHOLD:
++            snprintf(buf, buflen, "IDC[%u].ITHRESHOLD", idc);
++            return buf;
++        case APLIC_IDC_TOPI:
++            snprintf(buf, buflen, "IDC[%u].TOPI", idc);
++            return buf;
++        case APLIC_IDC_CLAIMI:
++            snprintf(buf, buflen, "IDC[%u].CLAIMI", idc);
++            return buf;
++        default:
++            break;
++        }
++    }
++    return "UNKNOWN";
++}
++
+ static uint64_t riscv_aplic_read(void *opaque, hwaddr addr, unsigned size)
+ {
+     uint32_t irq, word, idc, sm;
++    uint32_t ret = 0;
+     RISCVAPLICState *aplic = opaque;
+ 
+     /* Reads must be 4 byte words */
+@@ -637,18 +736,18 @@ static uint64_t riscv_aplic_read(void *opaque, hwaddr addr, unsigned size)
+     }
+ 
+     if (addr == APLIC_DOMAINCFG) {
+-        return APLIC_DOMAINCFG_RDONLY | aplic->domaincfg |
++        ret = APLIC_DOMAINCFG_RDONLY | aplic->domaincfg |
+                (aplic->msimode ? APLIC_DOMAINCFG_DM : 0);
+     } else if ((APLIC_SOURCECFG_BASE <= addr) &&
+             (addr < (APLIC_SOURCECFG_BASE + (aplic->num_irqs - 1) * 4))) {
+         irq  = ((addr - APLIC_SOURCECFG_BASE) >> 2) + 1;
+-        return aplic->sourcecfg[irq];
++        ret = aplic->sourcecfg[irq];
+     } else if (aplic->mmode && aplic->msimode &&
+                (addr == APLIC_MMSICFGADDR)) {
+-        return aplic->mmsicfgaddr;
++        ret = aplic->mmsicfgaddr;
+     } else if (aplic->mmode && aplic->msimode &&
+                (addr == APLIC_MMSICFGADDRH)) {
+-        return aplic->mmsicfgaddrH;
++        ret = aplic->mmsicfgaddrH;
+     } else if (aplic->mmode && aplic->msimode &&
+                (addr == APLIC_SMSICFGADDR)) {
+         /*
+@@ -660,66 +759,84 @@ static uint64_t riscv_aplic_read(void *opaque, hwaddr addr, unsigned size)
+          *     only zero in at least one of the supervisor-level child
+          * domains).
+          */
+-        return (aplic->num_children) ? aplic->smsicfgaddr : 0;
++        ret = (aplic->num_children) ? aplic->smsicfgaddr : 0;
+     } else if (aplic->mmode && aplic->msimode &&
+                (addr == APLIC_SMSICFGADDRH)) {
+-        return (aplic->num_children) ? aplic->smsicfgaddrH : 0;
++        ret = (aplic->num_children) ? aplic->smsicfgaddrH : 0;
+     } else if ((APLIC_SETIP_BASE <= addr) &&
+             (addr < (APLIC_SETIP_BASE + aplic->bitfield_words * 4))) {
+         word = (addr - APLIC_SETIP_BASE) >> 2;
+-        return riscv_aplic_read_pending_word(aplic, word);
++        ret = riscv_aplic_read_pending_word(aplic, word);
+     } else if (addr == APLIC_SETIPNUM) {
+-        return 0;
++        ret = 0;
+     } else if ((APLIC_CLRIP_BASE <= addr) &&
+             (addr < (APLIC_CLRIP_BASE + aplic->bitfield_words * 4))) {
+         word = (addr - APLIC_CLRIP_BASE) >> 2;
+-        return riscv_aplic_read_input_word(aplic, word);
++        ret = riscv_aplic_read_input_word(aplic, word);
+     } else if (addr == APLIC_CLRIPNUM) {
+-        return 0;
++        ret = 0;
+     } else if ((APLIC_SETIE_BASE <= addr) &&
+             (addr < (APLIC_SETIE_BASE + aplic->bitfield_words * 4))) {
+         word = (addr - APLIC_SETIE_BASE) >> 2;
+-        return riscv_aplic_read_enabled_word(aplic, word);
++        ret = riscv_aplic_read_enabled_word(aplic, word);
+     } else if (addr == APLIC_SETIENUM) {
+-        return 0;
++        ret = 0;
+     } else if ((APLIC_CLRIE_BASE <= addr) &&
+             (addr < (APLIC_CLRIE_BASE + aplic->bitfield_words * 4))) {
+-        return 0;
++        ret = 0;
+     } else if (addr == APLIC_CLRIENUM) {
+-        return 0;
++        ret = 0;
+     } else if (addr == APLIC_SETIPNUM_LE) {
+-        return 0;
++        ret = 0;
+     } else if (addr == APLIC_SETIPNUM_BE) {
+-        return 0;
++        ret = 0;
+     } else if (addr == APLIC_GENMSI) {
+-        return (aplic->msimode) ? aplic->genmsi : 0;
++        ret = (aplic->msimode) ? aplic->genmsi : 0;
+     } else if ((APLIC_TARGET_BASE <= addr) &&
+             (addr < (APLIC_TARGET_BASE + (aplic->num_irqs - 1) * 4))) {
+         irq = ((addr - APLIC_TARGET_BASE) >> 2) + 1;
+         sm = aplic->sourcecfg[irq] & APLIC_SOURCECFG_SM_MASK;
+         if (sm == APLIC_SOURCECFG_SM_INACTIVE) {
+-            return 0;
++            ret = 0;
++        } else {
++            ret = aplic->target[irq];
+         }
+-        return aplic->target[irq];
+     } else if (!aplic->msimode && (APLIC_IDC_BASE <= addr) &&
+             (addr < (APLIC_IDC_BASE + aplic->num_harts * APLIC_IDC_SIZE))) {
+         idc = (addr - APLIC_IDC_BASE) / APLIC_IDC_SIZE;
+         switch (addr - (APLIC_IDC_BASE + idc * APLIC_IDC_SIZE)) {
+         case APLIC_IDC_IDELIVERY:
+-            return aplic->idelivery[idc];
++            ret = aplic->idelivery[idc];
++            break;
+         case APLIC_IDC_IFORCE:
+-            return aplic->iforce[idc];
++            ret = aplic->iforce[idc];
++            break;
+         case APLIC_IDC_ITHRESHOLD:
+-            return aplic->ithreshold[idc];
++            ret = aplic->ithreshold[idc];
++            break;
+         case APLIC_IDC_TOPI:
+-            return riscv_aplic_idc_topi(aplic, idc);
++            ret = riscv_aplic_idc_topi(aplic, idc);
++            break;
+         case APLIC_IDC_CLAIMI:
+-            return riscv_aplic_idc_claimi(aplic, idc);
++            ret = riscv_aplic_idc_claimi(aplic, idc);
++            break;
+         default:
+             goto err;
+         };
++    } else {
++        goto err;
+     }
+ 
++    {
++        uint64_t hartid, pc;
++        char regname_buf[32];
++        const char *regname = riscv_aplic_regname(aplic, addr,
++                                                  regname_buf, sizeof(regname_buf));
++        riscv_aplic_get_cpu_info(&hartid, &pc);
++        trace_riscv_aplic_read(hartid, pc, aplic->mmio.addr + addr, ret, regname);
++    }
++    return ret;
++
+ err:
+     qemu_log_mask(LOG_GUEST_ERROR,
+                   "%s: Invalid register read 0x%" HWADDR_PRIx "\n",
+@@ -861,6 +978,16 @@ static void riscv_aplic_write(void *opaque, hwaddr addr, uint64_t value,
+         goto err;
+     }
+ 
++    {
++        uint64_t hartid, pc;
++        char regname_buf[32];
++        const char *regname = riscv_aplic_regname(aplic, addr,
++                                                  regname_buf, sizeof(regname_buf));
++        riscv_aplic_get_cpu_info(&hartid, &pc);
++        trace_riscv_aplic_write(hartid, pc, aplic->mmio.addr + addr, value,
++                                regname);
++    }
++
+     if (aplic->msimode) {
+         for (irq = 1; irq < aplic->num_irqs; irq++) {
+             riscv_aplic_msi_irq_update(aplic, irq);
+diff --git a/hw/intc/trace-events b/hw/intc/trace-events
+index 018c609ca5..5fc1fe0536 100644
+--- a/hw/intc/trace-events
++++ b/hw/intc/trace-events
+@@ -330,3 +330,7 @@ loongarch_msi_set_irq(int irq_num) "set msi irq %d"
+ loongarch_extioi_setirq(int irq, int level) "set extirq irq %d level %d"
+ loongarch_extioi_readw(uint64_t addr, uint64_t val) "addr: 0x%"PRIx64 "val: 0x%" PRIx64
+ loongarch_extioi_writew(uint64_t addr, uint64_t val) "addr: 0x%"PRIx64 "val: 0x%" PRIx64
++
++# riscv_aplic.c
++riscv_aplic_read(uint64_t hartid, uint64_t pc, uint64_t addr, uint32_t val, const char *regname) "[hart%" PRIu64 "@0x%" PRIx64 "] read 0x%" PRIx64 " = 0x%" PRIx32 " (%s)"
++riscv_aplic_write(uint64_t hartid, uint64_t pc, uint64_t addr, uint64_t val, const char *regname) "[hart%" PRIu64 "@0x%" PRIx64 "] write 0x%" PRIx64 " = 0x%" PRIx64 " (%s)"
+-- 
+2.43.7
+
